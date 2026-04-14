@@ -93,6 +93,3 @@ The system follows an automated workflow:
 * Auto-scaling implementation
 * Monitoring with Prometheus & Grafana
 * Multi-cloud support
-
----
-
