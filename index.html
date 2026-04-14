@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinOps | Financial Infrastructure</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="brand-logo">FinOps</div>
+        <nav>
+            <a href="#services">Services</a>
+            <a href="#domains">Domains</a>
+            <button class="btn-nav">Get Started</button>
+        </nav>
+    </header>
+
+    <div class="container">
+        <section class="hero-section">
+            <h1 class="hero-title">Precision Finance <br><span>for Modern Apps</span></h1>
+            <p class="hero-subtitle">The all-in-one infrastructure to handle income, expenses, and financial identity with industrial-grade security.</p>
+            <div class="hero-cta">
+                <a href="#domains" class="btn-blue">Start Building</a>
+                <a href="#" class="btn-outline">View Documentation</a>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="card fade-in">
+                <div class="chart-header">
+                    <span class="chart-title">Cashflow Overview</span>
+                    <span class="growth-label">+12.5% this month</span>
+                </div>
+                <div class="mini-chart">
+                    <div class="bar" style="height: 60%;"></div>
+                    <div class="bar expense" style="height: 40%;"></div>
+                    <div class="bar" style="height: 80%;"></div>
+                    <div class="bar expense" style="height: 30%;"></div>
+                    <div class="bar" style="height: 95%;"></div>
+                    <div class="bar expense" style="height: 50%;"></div>
+                    <div class="bar" style="height: 70%;"></div>
+                </div>
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-label">Total Income</div>
+                        <div class="stat-value">$12,450</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Expenses</div>
+                        <div class="stat-value">$4,200</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card security-card fade-in">
+                <i data-lucide="shield-check" class="security-icon"></i>
+                <div class="stat-label">Security Score</div>
+                <div class="stat-value">98<span class="total-score">/100</span></div>
+                <p class="security-text">Your finance data is fully encrypted.</p>
+            </div>
+        </section>
+
+        <section id="services" class="services-grid">
+            <div class="service-item fade-in">
+                <i data-lucide="pie-chart" class="service-icon"></i>
+                <h3>Tax Planning</h3>
+                <p>Automated projections for end-of-year filings.</p>
+            </div>
+            <div class="service-item fade-in">
+                <i data-lucide="zap" class="service-icon"></i>
+                <h3>Fast Payouts</h3>
+                <p>Connect your bank for instant expense clearing.</p>
+            </div>
+            <div class="service-item fade-in">
+                <i data-lucide="layers" class="service-icon"></i>
+                <h3>Multi-Cloud</h3>
+                <p>Scale your finance app across AWS or Vercel.</p>
+            </div>
+        </section>
+
+        <section id="domains" class="search-section fade-in">
+            <h2>Claim your Brand</h2>
+            <div class="search-box">
+                <input type="text" id="domainSearch" placeholder="Search a domain for your finance app...">
+                <button class="btn-blue" onclick="revealDomains()">Search</button>
+            </div>
+
+            <div id="resultsArea" class="results-list"></div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
