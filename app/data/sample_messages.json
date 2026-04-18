@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "label": "Fraud Alert - CRITICAL",
+    "text": "URGENT: I noticed unauthorized transactions on my account ACC-849302 totaling $12,450 USD on March 18th. Three charges I never made: TXN-XK9823 ($4,200), TXN-XK9824 ($5,750), TXN-XK9825 ($2,500). I need my account frozen IMMEDIATELY. I'm traveling and can be reached at john.smith@email.com. This is fraud!"
+  },
+  {
+    "id": 2,
+    "label": "Payment Dispute - HIGH",
+    "text": "We have a serious issue with Invoice INV-20240315 for $87,500. Our payment was transferred on March 10th via wire (REF: WT-44829102) but your system still shows it as outstanding. We are a long-term client of Meridian Financial and our credit rating is being affected. Please resolve this by March 25th or we will need to escalate to our legal team."
+  },
+  {
+    "id": 3,
+    "label": "Compliance Request - MEDIUM",
+    "text": "Dear Finance Team, As part of our annual SOX compliance audit, we require certified copies of all transactions above $50,000 processed through Account ACC-772910 during Q4 2023. Please provide the documentation in PDF format by April 15, 2024. Contact our compliance officer Sarah Johnson at s.johnson@corpaudit.com."
+  },
+  {
+    "id": 4,
+    "label": "Invoice Query - LOW",
+    "text": "Hi, could you clarify the breakdown on invoice INV-2024-0892? I see a line item for Service Fee of $340 that was not on the original quote from January. Happy to pay but just want to understand what this covers before processing. Thanks, Michael"
+  },
+  {
+    "id": 5,
+    "label": "Refund Request - HIGH",
+    "text": "We are requesting an immediate refund of $23,000 for Invoice INV-78432, paid Feb 28. The software subscription was cancelled per our termination notice sent on Feb 15. Despite cancellation, the full annual fee was charged. Please process the prorated refund within 5 business days."
+  }
+]

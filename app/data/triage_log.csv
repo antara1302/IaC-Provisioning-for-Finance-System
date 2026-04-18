@@ -1,0 +1,25 @@
+TRG-1774168389,2026-03-22T14:03:09.517991,MEDIUM,GENERAL_INQUIRY,0.5,1.0,False,URGENT: I noticed unauthorized transactions on my account ACC-849302 totaling $1
+TRG-1774174163,2026-03-22T15:39:23.831748,CRITICAL,FRAUD_ALERT,0.95,5.13,True,URGENT: I noticed unauthorized transactions on my account ACC-849302 totaling $1
+TRG-1774174236,2026-03-22T15:40:36.942133,CRITICAL,DISPUTE_RESOLUTION,0.95,1.75,True,"We have a serious issue with Invoice INV-20240315 for $87,500. Our payment was t"
+TRG-1774174516,2026-03-22T15:45:16.813736,CRITICAL,FRAUD_ALERT,0.95,0.87,True,URGENT: My corporate account ACC-992841 has been compromised. I see three unauth
+TRG-1774174555,2026-03-22T15:45:55.008553,LOW,INQUIRY,0.9,1.85,False,"Hi, could you clarify the breakdown on invoice INV-2024-0892? I see a line item "
+TRG-1774174590,2026-03-22T15:46:30.678587,CRITICAL,FRAUD_ALERT,0.95,0.95,True,URGENT: My corporate account ACC-992841 has been compromised. I see three unauth
+TRG-1774174943,2026-03-22T15:52:23.232871,CRITICAL,FRAUD_ALERT,0.95,1.15,True,URGENT: My corporate account ACC-992841 has been compromised. I see three unauth
+TRG-1774175854,2026-03-22T16:07:34.925604,CRITICAL,DISPUTE_RESOLUTION,0.95,2.4,True,"Dear Finance Team,
+
+I am writing on behalf of GlobalTech Solutions Ltd. We proce"
+TRG-1774495532,2026-03-26T08:55:32.243976,CRITICAL,DISPUTE_PAYMENT,0.95,2.89,True,"We have a serious issue with Invoice INV-20240315 for $87,500. Our payment was t"
+TRG-1774496594,2026-03-26T09:13:14.421484,LOW,INQUIRY,0.95,3.5,False,"Hi, could you clarify the breakdown on invoice INV-2024-0892? I see a line item "
+TRG-1774496812,2026-03-26T09:16:52.441627,LOW,INQUIRY,0.9,2.09,False,"Hi, could you clarify the breakdown on invoice INV-2024-0892? I see a line item "
+TRG-1774498118,2026-03-26T09:38:38.488470,CRITICAL,FRAUD_ALERT,0.95,2.23,True,URGENT: I noticed unauthorized transactions on my account ACC-849302 totaling $1
+TRG-1774505457,2026-03-26T11:40:57.647685,CRITICAL,OVERDUE_PAYMENT_NOTICE,0.95,5.42,True,Subject: Overdue Payment Notice & Account Suspension Warning — Invoice INV-2026-
+TRG-1774528611,2026-03-26T18:06:51.945864,HIGH,INFORMATION_REQUEST,0.95,2.82,False,"Dear Finance Team, As part of our annual SOX compliance audit, we require certif"
+TRG-1774528686,2026-03-26T18:08:06.819588,CRITICAL,DISPUTE_RESOLTION,0.95,2.21,True,"We have a serious issue with Invoice INV-20240315 for $87,500. Our payment was t"
+TRG-1774586443,2026-03-27T10:10:43.468167,LOW,INQUIRY,0.8,2.7,False,"Hi, could you clarify the breakdown on invoice INV-2024-0892? I see a line item "
+TRG-1774591366,2026-03-27T11:32:46.385042,CRITICAL,FRAUD_ALERT,0.95,2.26,True,"Dear Taxpayer,
+Our records indicate that you are eligible to receive a tax refun"
+TRG-1774593245,2026-03-27T12:04:05.762831,CRITICAL,DISPUTE_RESOLUTION,0.95,3.05,True,"We have a serious issue with Invoice INV-20240315 for $87,500. Our payment was t"
+TRG-1774593831,2026-03-27T12:13:51.324202,CRITICAL,FRAUD_ALERT,0.95,2.83,True,"Subject: URGENT - Fraudulent Transactions Detected on Corporate Account
+
+Dear Fi"
+TRG-1776353598,2026-04-16T21:03:18.160223,CRITICAL,FRAUD_ALERT,0.95,3.3,True,URGENT: I noticed unauthorized transactions on my account ACC-849302 totaling $1
