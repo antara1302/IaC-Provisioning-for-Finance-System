@@ -10,9 +10,10 @@ terraform {
 provider "docker" {}
 
 resource "docker_image" "finance_app" {
-  name = "finance-app"
+  name = "finance-ai"
+
   build {
-    context = "../"
+    context = "../app"   # ✅ correct folder
   }
 }
 
@@ -21,7 +22,7 @@ resource "docker_container" "finance_container" {
   image = docker_image.finance_app.image_id
 
   ports {
-    internal = 3000
-    external = 3000
+    internal = 8501   # ✅ Streamlit port
+    external = 8501
   }
 }
