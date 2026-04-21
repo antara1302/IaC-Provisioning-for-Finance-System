@@ -1,19 +1,10 @@
-terraform {
-  required_providers {
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
-    }
-  }
-}
-
 provider "docker" {}
 
 resource "docker_image" "finance_app" {
   name = "finance-ai"
 
   build {
-    context = "../app"   # ✅ correct folder
+    context = "../app" # ✅ correct folder
   }
 }
 
@@ -22,7 +13,7 @@ resource "docker_container" "finance_container" {
   image = docker_image.finance_app.image_id
 
   ports {
-    internal = 8501   # ✅ Streamlit port
+    internal = 8501 # ✅ Streamlit port
     external = 8501
   }
 }

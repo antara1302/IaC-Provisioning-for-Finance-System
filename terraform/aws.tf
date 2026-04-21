@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~> 3.0"
+    }
   }
 
   # Uncomment the backend after creating the S3 bucket
@@ -126,8 +130,8 @@ resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block      = "0.0.0.0/0"
-    gateway_id      = aws_internet_gateway.main.id
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
   }
 
   tags = {
@@ -260,10 +264,10 @@ resource "aws_instance" "app" {
 
   # User data script to install Docker and run the container
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    docker_image_uri   = var.docker_image_uri
-    container_port     = var.container_port
-    app_name          = var.app_name
-    aws_region        = var.aws_region
+    docker_image_uri = var.docker_image_uri
+    container_port   = var.container_port
+    app_name         = var.app_name
+    aws_region       = var.aws_region
   }))
 
   root_block_device {
