@@ -6,7 +6,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Lazy initialization of Groq client - only created when first used
+_client = None
+
+def get_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+        _client = Groq(api_key=api_key)
+    return _client
+
+client = None  # For backwards compatibility, will be set by get_client()
 
 # Try to load spaCy, fall back gracefully if not available
 try:
@@ -68,7 +80,7 @@ MESSAGE: \"\"\"{text}\"\"\"
   "action_required": "what specific action is being requested"
 }}"""
 
-    response = client.chat.completions.create(
+    response = get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         max_tokens=400,
         messages=[{"role": "user", "content": prompt}]
