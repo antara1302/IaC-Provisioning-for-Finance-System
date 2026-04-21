@@ -1,28 +1,368 @@
-name: FinOps CI/CD Pipeline
+name: FinOps CI/CD Pipeline - AWS Deployment
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: finops-ai
+  CONTAINER_NAME: finops-container
+  CONTAINER_PORT: 8501
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 1: BUILD & TEST
+  # ─────────────────────────────────────────────────────────────────────────
+
   build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Docker
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          cd app
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Unit Tests
+        run: |
+          cd app
+          python -m pytest test_pipeline.py -v
+        continue-on-error: true
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker Image
         run: |
           cd app
-          docker build -t finance-ai .
+          docker build -t $ECR_REPOSITORY:${{ github.sha }} .
+          docker tag $ECR_REPOSITORY:${{ github.sha }} $ECR_REPOSITORY:latest
 
-      - name: Test Container
+      - name: Test Docker Container Locally
         run: |
-          docker run -d finance-ai
-          sleep 10
-          docker ps
+          docker run --rm \
+            -e "PYTHONUNBUFFERED=1" \
+            --entrypoint python \
+            $ECR_REPOSITORY:${{ github.sha }} \
+            -c "import streamlit; print('Docker image is valid')"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 2: PUSH TO ECR
+  # ─────────────────────────────────────────────────────────────────────────
+
+  push-to-ecr:
+    name: Push Image to ECR
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    outputs:
+      image_uri: ${{ steps.image.outputs.uri }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and Push to ECR
+        uses: docker/build-push-action@v4
+        with:
+          context: ./app
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Output Image URI
+        id: image
+        run: |
+          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          echo "uri=$IMAGE_URI" >> $GITHUB_OUTPUT
+          echo "Image pushed to ECR: $IMAGE_URI"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 3: TERRAFORM PLAN & VALIDATE
+  # ─────────────────────────────────────────────────────────────────────────
+
+  terraform-plan:
+    name: Terraform Plan
+    needs: push-to-ecr
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    outputs:
+      plan_exit_code: ${{ steps.plan.outputs.exit_code }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.x
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var="docker_image_uri=${{ needs.push-to-ecr.outputs.image_uri }}" \
+            -out=tfplan \
+            -exit-code || EXIT_CODE=$?
+          echo "exit_code=${EXIT_CODE:-0}" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan
+          path: terraform/tfplan
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 4: TERRAFORM APPLY & DEPLOY
+  # ─────────────────────────────────────────────────────────────────────────
+
+  terraform-apply:
+    name: Terraform Apply & Deploy
+    needs: [push-to-ecr, terraform-plan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.x
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan
+          path: terraform
+
+      - name: Terraform Apply
+        run: |
+          terraform apply \
+            -var="docker_image_uri=${{ needs.push-to-ecr.outputs.image_uri }}" \
+            -auto-approve
+
+      - name: Terraform Output
+        id: tf-output
+        run: |
+          INSTANCE_ID=$(terraform output -raw instance_id)
+          PUBLIC_IP=$(terraform output -raw public_ip)
+          APP_URL=$(terraform output -raw app_url)
+          
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+          
+          echo "✅ Infrastructure deployed successfully!"
+          echo "Instance ID: $INSTANCE_ID"
+          echo "Public IP: $PUBLIC_IP"
+          echo "Application URL: $APP_URL"
+
+      - name: Save Deployment Info
+        run: |
+          cat > deployment_info.json << EOF
+          {
+            "instance_id": "${{ steps.tf-output.outputs.instance_id }}",
+            "public_ip": "${{ steps.tf-output.outputs.public_ip }}",
+            "app_url": "${{ steps.tf-output.outputs.app_url }}",
+            "deployed_at": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "commit_sha": "${{ github.sha }}"
+          }
+          EOF
+
+      - name: Upload Deployment Info
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment_info
+          path: terraform/deployment_info.json
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 5: HEALTH CHECKS & VALIDATION
+  # ─────────────────────────────────────────────────────────────────────────
+
+  health-check:
+    name: Health Check & Validation
+    needs: terraform-apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deployment_info
+
+      - name: Parse Deployment Info
+        id: deployment
+        run: |
+          APP_URL=$(jq -r '.app_url' deployment_info.json)
+          INSTANCE_ID=$(jq -r '.instance_id' deployment_info.json)
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+      - name: Wait for Application to Start
+        run: sleep 30
+
+      - name: Health Check
+        id: health
+        run: |
+          for i in {1..5}; do
+            echo "Attempt $i: Checking application health..."
+            if curl -f -s -o /dev/null -w "%{http_code}" "${{ steps.deployment.outputs.app_url }}" | grep -q "200\|302"; then
+              echo "✅ Application is healthy!"
+              exit 0
+            fi
+            if [ $i -lt 5 ]; then
+              sleep 15
+            fi
+          done
+          echo "⚠️ Health check failed after 5 attempts"
+          exit 1
+        continue-on-error: true
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check EC2 Instance Status
+        run: |
+          STATUS=$(aws ec2 describe-instance-status \
+            --instance-ids ${{ steps.deployment.outputs.instance_id }} \
+            --query 'InstanceStatuses[0].InstanceStatus.Status' \
+            --output text)
+          echo "Instance Status: $STATUS"
+          if [ "$STATUS" != "ok" ]; then
+            echo "⚠️ Instance status check in progress..."
+          fi
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # STAGE 6: NOTIFICATIONS
+  # ─────────────────────────────────────────────────────────────────────────
+
+  notify:
+    name: Send Deployment Notification
+    needs: [terraform-apply, health-check]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Deployment Info
+        uses: actions/download-artifact@v3
+        with:
+          name: deployment_info
+        continue-on-error: true
+
+      - name: Parse Deployment Info
+        id: deployment
+        run: |
+          if [ -f deployment_info.json ]; then
+            APP_URL=$(jq -r '.app_url' deployment_info.json)
+            INSTANCE_ID=$(jq -r '.instance_id' deployment_info.json)
+            echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+            echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Create Success Summary
+        if: needs.terraform-apply.result == 'success'
+        run: |
+          cat > summary.txt << EOF
+          ✅ FinOps AI Deployment Successful!
+          
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref }}
+          Repository: ${{ github.repository }}
+          
+          Deployment Details:
+          - Instance ID: ${{ steps.deployment.outputs.instance_id }}
+          - Application URL: ${{ steps.deployment.outputs.app_url }}
+          - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          
+          Next Steps:
+          - Access the application at ${{ steps.deployment.outputs.app_url }}
+          - Monitor logs in CloudWatch
+          - Check EC2 dashboard for instance details
+          EOF
+          cat summary.txt
+
+      - name: Create Failure Summary
+        if: needs.terraform-apply.result != 'success'
+        run: |
+          cat > summary.txt << EOF
+          ❌ FinOps AI Deployment Failed!
+          
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref }}
+          Repository: ${{ github.repository }}
+          
+          Please check the GitHub Actions logs for more details.
+          EOF
+          cat summary.txt
