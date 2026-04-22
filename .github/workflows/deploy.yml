@@ -157,16 +157,8 @@ jobs:
         run: |
           terraform plan \
             -var="docker_image_uri=${{ needs.push-to-ecr.outputs.image_uri }}" \
-            -out=tfplan \
-            -exit-code || EXIT_CODE=$?
-          echo "exit_code=${EXIT_CODE:-0}" >> $GITHUB_OUTPUT
+            -detailed-exitcode || true
         continue-on-error: true
-
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: terraform/tfplan
 
   # ─────────────────────────────────────────────────────────────────────────
   # STAGE 4: TERRAFORM APPLY & DEPLOY
@@ -197,12 +189,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.x
-
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: terraform
 
       - name: Terraform Init
         run: terraform init
@@ -294,7 +280,7 @@ jobs:
         continue-on-error: true
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
