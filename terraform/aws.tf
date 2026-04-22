@@ -14,7 +14,7 @@ terraform {
 
   # Uncomment the backend after creating the S3 bucket
   # backend "s3" {
-  #   bucket         = "your-terraform-state-bucket"
+  #   bucket         = "finops-bucket-aj418"
   #   key            = "finops/terraform.tfstate"
   #   region         = "eu-north-1"
   #   encrypt        = true
@@ -30,7 +30,6 @@ provider "aws" {
       Environment = var.environment
       Project     = "FinOps-AI"
       ManagedBy   = "Terraform"
-      CreatedAt   = timestamp()
     }
   }
 }
