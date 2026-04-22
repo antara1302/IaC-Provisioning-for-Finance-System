@@ -8,14 +8,13 @@ terraform {
     }
   }
 
-  # Uncomment the backend after creating the S3 bucket
-  # backend "s3" {
-  #   bucket         = "finops-bucket-aj418"
-  #   key            = "finops/terraform.tfstate"
-  #   region         = "eu-north-1"
-  #   encrypt        = true
-  #   dynamodb_table = "terraform-locks"
-  # }
+  backend "s3" {
+    bucket         = "finops-bucket-aj418"
+    key            = "finops/terraform.tfstate"
+    region         = "eu-north-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"
+  }
 }
 
 provider "aws" {
