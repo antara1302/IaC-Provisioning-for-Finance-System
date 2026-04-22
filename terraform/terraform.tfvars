@@ -3,7 +3,7 @@
 aws_region     = "eu-north-1"
 environment    = "production"
 app_name       = "finops-ai"
-instance_type  = "t3.medium"
+instance_type  = "t3.micro"
 container_port = 8501
 
 tags = {
