@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
-    }
   }
 
   # Uncomment the backend after creating the S3 bucket
@@ -33,6 +29,10 @@ provider "aws" {
     }
   }
 }
+
+# ─── Data Sources ──────────────────────────────────────────────────────────
+
+data "aws_caller_identity" "current" {}
 
 # ─── Variables ─────────────────────────────────────────────────────────────
 
@@ -61,14 +61,16 @@ variable "instance_type" {
 }
 
 variable "groq_api_key" {
-  description = "Groq API key for the application"
+  description = "Groq API key for the application (pass via environment TF_VAR_groq_api_key or -var)"
   type        = string
   sensitive   = true
+  default     = ""  # Will be provided at runtime or via GitHub Actions
 }
 
 variable "docker_image_uri" {
-  description = "Docker image URI from ECR"
+  description = "Docker image URI from ECR (will be pushed by GitHub Actions)"
   type        = string
+  default     = ""  # Will use ECR repo URI if empty
 }
 
 variable "container_port" {
@@ -294,6 +296,13 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
+# ─── Local computed values ────────────────────────────────────────────────
+
+locals {
+  # Compute full ECR URI if not provided
+  docker_image_uri = var.docker_image_uri != "" ? var.docker_image_uri : "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.app_name}:latest"
+}
+
 # ─── EC2 Instance ─────────────────────────────────────────────────────────
 
 resource "aws_instance" "app" {
@@ -305,7 +314,7 @@ resource "aws_instance" "app" {
 
   # User data script to install Docker and run the container
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    docker_image_uri = var.docker_image_uri
+    docker_image_uri = local.docker_image_uri
     container_port   = var.container_port
     app_name         = var.app_name
     aws_region       = var.aws_region

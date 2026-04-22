@@ -24,10 +24,10 @@ The goal is to eliminate manual setup errors and ensure **consistent, repeatable
 
 | Category         | Tools/Technologies       |
 | ---------------- | ------------------------ |
-| IaC Tools        | Terraform, Ansible       |
+| IaC Tools        | Terraform                |
 | Containerization | Docker                   |
 | Version Control  | Git                      |
-| CI/CD            | Jenkins / GitHub Actions |
+| CI/CD            | GitHub Actions           |
 | Cloud Platform   | AWS (EC2, VPC, etc.)     |
 | Scripting        | Bash / YAML              |
 
