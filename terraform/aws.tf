@@ -16,7 +16,7 @@ terraform {
   # backend "s3" {
   #   bucket         = "your-terraform-state-bucket"
   #   key            = "finops/terraform.tfstate"
-  #   region         = "us-east-1"
+  #   region         = "eu-north-1"
   #   encrypt        = true
   #   dynamodb_table = "terraform-locks"
   # }
@@ -40,7 +40,7 @@ provider "aws" {
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-north-1"
 }
 
 variable "environment" {
@@ -61,6 +61,12 @@ variable "instance_type" {
   default     = "t3.medium"
 }
 
+variable "groq_api_key" {
+  description = "Groq API key for the application"
+  type        = string
+  sensitive   = true
+}
+
 variable "docker_image_uri" {
   description = "Docker image URI from ECR"
   type        = string
@@ -76,6 +82,42 @@ variable "tags" {
   description = "Additional tags to apply to resources"
   type        = map(string)
   default     = {}
+}
+
+# ─── Terraform State Backend Infrastructure ────────────────────────────────
+
+resource "aws_s3_bucket" "terraform_state" {
+  bucket = "finops-bucket-aj418" # Must be globally unique
+}
+
+resource "aws_s3_bucket_versioning" "terraform_state_versioning" {
+  bucket = aws_s3_bucket.terraform_state.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state_encryption" {
+  bucket = aws_s3_bucket.terraform_state.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_dynamodb_table" "terraform_locks" {
+  name         = "terraform-locks"
+  billing_mode = "PROVISIONED"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key     = "LockID"
+
+  attribute {
+    name = "LockID"
+    type = "S"
+  }
 }
 
 # ─── Data Sources ─────────────────────────────────────────────────────────
@@ -268,6 +310,7 @@ resource "aws_instance" "app" {
     container_port   = var.container_port
     app_name         = var.app_name
     aws_region       = var.aws_region
+    groq_api_key     = var.groq_api_key
   }))
 
   root_block_device {

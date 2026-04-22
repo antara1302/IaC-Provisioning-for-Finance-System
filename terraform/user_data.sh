@@ -30,6 +30,7 @@ docker pull ${docker_image_uri}
 docker run -d \
   --name ${app_name} \
   -p ${container_port}:${container_port} \
+  -e GROQ_API_KEY="${groq_api_key}" \
   --restart always \
   --log-driver awslogs \
   --log-opt awslogs-group=/aws/ec2/${app_name} \

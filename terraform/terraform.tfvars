@@ -1,6 +1,6 @@
 # Terraform configuration for AWS deployment
 
-aws_region     = "us-east-1"
+aws_region     = "eu-north-1"
 environment    = "production"
 app_name       = "finops-ai"
 instance_type  = "t3.medium"
