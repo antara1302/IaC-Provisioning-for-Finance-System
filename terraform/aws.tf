@@ -317,6 +317,7 @@ resource "aws_instance" "app" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  key_name               = "Finance APP"
 
   # User data script to install Docker and run the container
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
