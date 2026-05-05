@@ -1,42 +1,34 @@
 #!/bin/bash
 set -e
 
-# Update system
-apt-get update
+apt-get update -y
 apt-get upgrade -y
 
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
+apt-get install -y unzip curl docker.io
 
-# Add ubuntu user to docker group
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+systemctl start docker
+systemctl enable docker
+
 usermod -aG docker ubuntu
 
-# Install CloudWatch Logs agent
 wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
 dpkg -i -E ./amazon-cloudwatch-agent.deb
 
-# Create logs directory
 mkdir -p /var/log/finops
-
-# Log startup
 echo "FinOps AI application starting..." >> /var/log/finops/startup.log
 
-# Login to ECR
 aws ecr get-login-password --region ${aws_region} | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query Account --output text).dkr.ecr.${aws_region}.amazonaws.com
 
-# Pull and run the Docker image
 docker pull ${docker_image_uri}
 docker run -d \
   --name ${app_name} \
   -p ${container_port}:${container_port} \
   -e GROQ_API_KEY="${groq_api_key}" \
   --restart always \
-  --log-driver awslogs \
-  --log-opt awslogs-group=/aws/ec2/${app_name} \
-  --log-opt awslogs-region=${aws_region} \
-  --log-opt awslogs-stream=ecs-agent \
   ${docker_image_uri}
 
-# Log successful startup
 echo "FinOps AI application started successfully at $(date)" >> /var/log/finops/startup.log
